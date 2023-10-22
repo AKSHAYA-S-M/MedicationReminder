@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medication Reminder</title>
+    
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <h1>Medication Reminder</h1>
+    <form id="pill-reminder-form">
+        <label for="date">Date:</label>
+        <input type="date" id="date" required>
+        <br>
+
+        <label for="time">Time:</label>
+        <input type="time" id="time" required>
+        <br>
+
+        <label for="medicine-name">Medicine Name:</label>
+        <input type="text" id="medicine-name" required>
+        <br>
+
+        <label for="dosage">Dosage:</label>
+        <input type="text" id="dosage" required>
+        <br>
+
+        <button type="button" id="set-alarm">Set Alarm</button>
+	<button type="button" id="clear-form">Clear</button>
+    </form>
+
+    <h2>Alarm List</h2>
+    <ul id="alarm-list"></ul>
+
+    <script>
+        const alarmList = [];
+
+        function setAlarm(date, time, medicineName, dosage) {
+            const alarmDateTime = new Date(`${date}T${time}`);
+            const currentTime = new Date();
+
+            if (alarmDateTime <= currentTime) {
+                alert("Please select a future date and time.");
+                return;
+            }
+
+            const timeDiff = alarmDateTime - currentTime;
+
+            const alarm = setTimeout(function() {
+                const audio = new Audio('alarm.mp3');
+                audio.play();
+
+                audio.onended = function() {
+                    const message = `Time to take ${dosage} of ${medicineName}`;
+                    const speechSynthesis = window.speechSynthesis;
+                    const utterance = new SpeechSynthesisUtterance(message);
+                    speechSynthesis.speak(utterance);
+                };
+
+                // Remove the alarm from the list after it's triggered
+                alarmList.splice(alarmList.indexOf(alarm), 1);
+                updateAlarmList();
+            }, timeDiff);
+
+            // Store the alarm in the list with date, time, medicine name, and dosage
+            alarmList.push({ date, time, medicineName, dosage, alarm });
+            updateAlarmList();
+
+            alert(`Alarm set for ${date} at ${time}`);
+        }
+
+        function deleteAlarm(index) {
+            const alarm = alarmList[index];
+            clearTimeout(alarm.alarm); // Clear the timeout
+            alarmList.splice(index, 1); // Remove from the list
+            updateAlarmList();
+        }
+
+        function updateAlarmList() {
+            const listElement = document.getElementById("alarm-list");
+            listElement.innerHTML = "";
+
+            for (let i = 0; i < alarmList.length; i++) {
+                const listItem = document.createElement("li");
+                const alarm = alarmList[i];
+                const alarmDate = alarm.date;
+                const alarmTime = alarm.time;
+                const medicineName = alarm.medicineName;
+                const dosage = alarm.dosage;
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Delete";
+                deleteButton.addEventListener("click", function() {
+                    deleteAlarm(i);
+                });
+                listItem.textContent = `Date: ${alarmDate}, Time: ${alarmTime}, Medicine: ${medicineName}, Dosage: ${dosage}`;
+                listItem.appendChild(deleteButton);
+                listElement.appendChild(listItem);
+            }
+        }
+	function clearForm() {
+            document.getElementById("date").value = "";
+            document.getElementById("time").value = "";
+            document.getElementById("medicine-name").value = "";
+            document.getElementById("dosage").value = "";
+        }
+
+        document.getElementById("set-alarm").addEventListener("click", function() {
+            const date = document.getElementById("date").value;
+            const time = document.getElementById("time").value;
+            const medicineName = document.getElementById("medicine-name").value;
+            const dosage = document.getElementById("dosage").value;
+
+            setAlarm(date, time, medicineName, dosage);
+        });
+	document.getElementById("clear-form").addEventListener("click", function() {
+            clearForm();
+	});
+    </script>
+</body>
+</html>
